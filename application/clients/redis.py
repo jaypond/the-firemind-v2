@@ -5,12 +5,12 @@ from typing import List, Dict
 class Redis:
     """
     Client library for communicating with redis instance.
-    
+
     :param host: Redis host
     :param db: Redis db
     :param port: Redis port
     """
-    def __init__(host, db: int=0, port: int=6379):
+    def __init__(self, host, db: int=0, port: int=6379):
         self.host = host
         self.db = db
         self.port = port
