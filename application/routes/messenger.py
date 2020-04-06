@@ -1,6 +1,10 @@
+import json
+from typing import List, Dict
 from tornado.web import access_log as logger
+
 from application.handler import BaseHandler
-from application.models.cards import Card
+from application.models.card import Card
+from application.clients.messenger import Messenger
 
 
 def messenger_template_helper(list_of_data: List[Dict]) -> Dict:
@@ -24,14 +28,35 @@ def messenger_template_helper(list_of_data: List[Dict]) -> Dict:
             ]
         }
         elements.append(element)
-    return elements
+    
+    messenger_payload = {
+        'attachment': {
+            'type': 'template',
+            'payload': {
+                'template_type': 'generic',
+                'elements': elements
+            }
+        }
+    }
+    return messenger_payload
 
 
 class MessengerHandler(BaseHandler):
 
     async def get(self):
-        pass
+        challenge = Messenger.verify_webhook(self.request.arguments)
+        return self.write(challenge, 200)
     
     async def post(self):
-        pass
-    
+        payload = json.loads(self.request.body)
+        event = payload['entry'][0]['messaging']
+        for x in event:
+            if Messenger.is_user_message(x):
+                text = x['message']['text']
+                sender_id = x['sender']['id']
+                cards = Card.card_name(text).get()
+                response = messenger_template_helper(
+                    [card.card_data for card in cards]
+                )
+                Messenger.send_message(sender_id, response)
+        return self.write("ok", 200)
