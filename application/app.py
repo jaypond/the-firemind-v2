@@ -4,7 +4,8 @@ import tornado.web
 from tornado.options import define, options, parse_command_line
 from tornado.log import enable_pretty_logging, access_log as logger
 
-from .routes.cards import CardHandler
+from .routes.cards import CardHandler, CardSetHandler, PriceHandler
+from .routes.messenger import MessengerHandler
 from .clients.redis import Redis
 from .clients.tcgplayer import TCGPlayer
 
@@ -23,7 +24,10 @@ class Application:
             'debug': True
         }
         routes = [
-            (r"/cards", CardHandler)
+            (r"/cards", CardHandler),
+            (r"/card_sets", CardSetHandler),
+            (r"/prices", PriceHandler),
+            (r"/webhook", MessengerHandler)
         ]
         return tornado.web.Application(routes, **config)
 

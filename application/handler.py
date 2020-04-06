@@ -2,12 +2,14 @@ import tornado.web
 
 
 class BaseHandler(tornado.web.RequestHandler):
-    def __initialize__(self, session, resource):
-        self.resource = resource
-        self.session = session
+    def initialize(self):
+        self.session = self.settings.get('session')
+        self.resource = self.settings.get('resource')
     
-    def write(self, data):
+    #TODO: add status code handling inside
+    def write(self, data, status_code=None):
         if isinstance(data, list):
             data = {'data': data}
-
+        if status_code:
+            self.set_status(status_code)
         super(BaseHandler, self).write(data)
