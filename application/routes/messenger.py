@@ -28,7 +28,6 @@ def messenger_template_helper(list_of_data: List[Dict]) -> Dict:
             ]
         }
         elements.append(element)
-    
     messenger_payload = {
         'attachment': {
             'type': 'template',

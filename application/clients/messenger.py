@@ -51,5 +51,4 @@ class Messenger:
             params=auth,
             json=payload
         )
-        print(response.status_code)
         return "Success"

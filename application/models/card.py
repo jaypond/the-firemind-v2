@@ -47,5 +47,5 @@ class Card(Model):
     @scope
     def card_name(self, query, name):
         return query.where_raw(
-            f"name = '{name}' or clean_name = '{name}'"
+            f"name ILIKE '{name}' OR clean_name ILIKE '{name}'"
         )
