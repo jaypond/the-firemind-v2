@@ -13,10 +13,20 @@ class Messenger:
     """
     Client library for communicating with Graph API (Facebook).
     """
+
     @staticmethod
-    def verify_webhook(self, request):
-        verify_token = request.arguments.get('hub.verify_token')
-        challenge = request.arguments.get('hub.challenge')
+    def is_user_message(message):
+        condition = (
+            message.get('message') and 
+            message['message'].get('text') and
+            not message['message'].get('is_echo')
+        )
+        return condition
+
+    @staticmethod
+    def verify_webhook(request_arguments: Dict):
+        verify_token = request_arguments.get('hub.verify_token')[0]
+        challenge = request_arguments.get('hub.challenge')[0]
         if verify_token.decode('utf-8') == VERIFY_TOKEN:
             logger.info('Messenger webhook validated.')
             return challenge.decode('utf-8')
@@ -41,5 +51,5 @@ class Messenger:
             params=auth,
             json=payload
         )
-
+        print(response.status_code)
         return "Success"

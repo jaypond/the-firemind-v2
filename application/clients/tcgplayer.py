@@ -1,9 +1,11 @@
 import json
 import requests
 
+from tornado.web import access_log as logger
 from typing import List, Dict
 from datetime import datetime
 from functools import wraps, cached_property
+
 
 #TODO: move these to docker-compose
 TCGPLAYER_API_VERSION = 'v1.37.0'
@@ -26,6 +28,7 @@ def request_access(f):
     return wrapper
 
 
+#TODO: raise error in case of authentication problems
 class TCGPlayer:
     """
     Client library for communicating with TCGPlayer's API.
@@ -38,6 +41,7 @@ class TCGPlayer:
         """
         Authenticate
         """
+        logger.info('Authenticating - TCGPlayer API...')
         data = {
             'grant_type': 'client_credentials',
             'client_id': PUBLIC_KEY,
@@ -55,6 +59,7 @@ class TCGPlayer:
             self.token_expiry = datetime.strptime(
                 content.get('.expires'), DATETIME_FORMAT
             )
+            logger.info('Authenticated! - TCGPlayer API')
         else:
             raise NotImplementedError
 
@@ -66,10 +71,9 @@ class TCGPlayer:
         params = {
             'offset': offset,
             'limit': limit,
-            'category': MTG_CATEGORY_ID,
+            'categoryId': MTG_CATEGORY_ID,
             'productTypes': 'Cards'
         }
-        print(self.session.headers)
         r = self.session.get(
             f'{TCGPLAYER_API_URL}/catalog/products',
             params=params
@@ -78,8 +82,7 @@ class TCGPlayer:
             content = r.json()
             cards = content.get('results')
             return cards
-        else:
-            raise NotImplementedError
+
     
     @request_access
     def card_sets(self, offset=0, limit=100) -> List[Dict]:
@@ -98,8 +101,7 @@ class TCGPlayer:
             content = r.json()
             card_sets = content.get('results')
             return card_sets
-        else:
-            raise NotImplementedError
+
     
     @request_access
     def prices(self, card_ids: List[int]) -> List[Dict]:
@@ -114,5 +116,3 @@ class TCGPlayer:
             content = r.json()
             card_sets = content.get('results')
             return card_sets
-        else:
-            raise NotImplementedError
