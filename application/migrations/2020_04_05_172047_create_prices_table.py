@@ -10,8 +10,8 @@ class CreatePricesTable(Migration):
         with self.schema.create('prices') as table:
             table.increments('id')
             table.integer('card_id')
-            table.float('normal_price')
-            table.float('foil_price')
+            table.float('price').nullable()
+            table.enum('card_type', ['Normal', 'Foil'])
 
     def down(self):
         """

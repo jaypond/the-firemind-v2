@@ -1,5 +1,7 @@
 from orator import Model
-from orator.orm import accessor, has_one
+from orator.orm import accessor, has_one, has_many, scope
+from .card_set import CardSet
+from .price import Price
 
 class Card(Model):
     __fillable__ = [
@@ -8,13 +10,27 @@ class Card(Model):
     __primary_key__ = 'card_id'
     __timestamps__ = False
 
-    @has_one
+    @has_one('set_id', 'set_id')
     def card_set(self):
         return CardSet
     
-    @has_one
-    def price(self):
+    @has_many
+    def prices(self):
         return Price
+    
+    @accessor
+    def foil_price(self):
+        price_object = next(
+            filter(lambda x: x.card_type == 'Foil', self.prices), None
+        )
+        return price_object.price
+    
+    @accessor
+    def normal_price(self):
+        price_object = next(
+            filter(lambda x: x.card_type == 'Normal', self.prices), None
+        )
+        return price_object.price
     
     @accessor
     def card_data(self):
@@ -23,9 +39,10 @@ class Card(Model):
             'image_url': self.get_raw_attribute('image_url'),
             'url': self.get_raw_attribute('url'),
             'set_name': self.card_set.name,
-            'normal_price': self.price.normal_price,
-            'foil_price': self.price.foil_price
+            'normal_price': self.normal_price,
+            'foil_price': self.foil_price
         }
+        return data
 
     @scope
     def card_name(self, query, name):

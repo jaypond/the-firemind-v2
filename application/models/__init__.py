@@ -1,12 +1,12 @@
 from orator import DatabaseManager, Model
 
 config = {
-    'mysql': {
-        'driver': 'mysql',
+    'postgres': {
+        'driver': 'postgres',
         'host': 'localhost',
-        'database': 'database',
-        'user': 'root',
-        'password': '',
+        'database': 'the_firemind',
+        'user': 'jasonmatthewgarcia',
+        'password': 'jasonjason3124',
         'prefix': ''
     }
 }
