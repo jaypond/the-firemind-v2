@@ -1,10 +1,11 @@
-import asyncio
+import aiohttp
 import tornado.web
+import tornado.ioloop
 
 from tornado.options import define, options, parse_command_line
 from tornado.log import enable_pretty_logging, access_log as logger
 
-from .routes.cards import CardHandler, CardSetHandler, PriceHandler
+from .routes.cards import CardHandler, CardSetHandler, PriceHandler, TestHandler
 from .routes.messenger import MessengerHandler
 from .clients.redis import Redis
 from .clients.tcgplayer import TCGPlayer
@@ -12,18 +13,20 @@ from .clients.tcgplayer import TCGPlayer
 define("port", default=8888, help="run on the given port", type=int)
 define("debug", default=True, help="run in debug mode")
 
-#TODO: import config cleaner; make it async
+#TODO: import config cleaner
 class Application:
     def __init__(self):
         pass
 
     def make_app(self) -> tornado.web.Application:
+        session = aiohttp.ClientSession()
         config = {
-            'session': Redis('127.0.0.1'),
-            'resource': TCGPlayer(),
+            'cache': Redis('127.0.0.1'),
+            'resource': TCGPlayer(session),
             'debug': True
         }
         routes = [
+            (r"/test", TestHandler),
             (r"/cards", CardHandler),
             (r"/card_sets", CardSetHandler),
             (r"/prices", PriceHandler),

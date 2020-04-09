@@ -1,4 +1,7 @@
 import json
+import time
+import aiohttp
+import asyncio
 from tornado.web import access_log as logger
 from orator.exceptions.orm import ModelNotFound
 
@@ -8,15 +11,36 @@ from application.models.card import Card
 from application.models.card_set import CardSet
 from application.models.price import Price
 
+from application.clients.tcgplayer import TCGPlayer
 
 #TODO: global variables for tables, error handling
 
 
-class CardHandler(BaseHandler):
+class TestHandler(BaseHandler):
+    async def prepare(self):
+        super().prepare()
+        # await self.resource.set_session(self.session)
 
     async def get(self):
+        for i in range(10):
+            print(i)
+            await asyncio.sleep(1)
+
+    async def post(self):
         try:
-            card = Card.find_or_fail(193288)
+            cards = await self.resource.cards(offset=100)
+        except Exception as e:
+            logger.error(e)
+        return self.write(cards)
+
+
+class CardHandler(BaseHandler):
+    async def get(self, card_id):
+        """
+        Test endpoint to fetch a card from the database
+        """
+        try:
+            card = Card.find_or_fail(card_id)
             self.write(card.card_data)
         except ModelNotFound:
             self.set_status(404)
@@ -27,7 +51,7 @@ class CardHandler(BaseHandler):
         Retrieve cards from TCGPlayer and add to database via Orator.
         """
         offset = 0
-        cards = self.resource.cards(offset=offset)
+        cards = await self.resource.cards(offset=offset)
         while cards:
             card_data = [
                 {
@@ -55,7 +79,7 @@ class CardSetHandler(BaseHandler):
         with using the ORM to insert these into the database.
         """
         offset = 0
-        card_sets = self.resource.card_sets(offset=offset)
+        card_sets = await self.resource.card_sets(offset=offset)
         while card_sets:
             for card_set in card_sets:
                 CardSet.create(
@@ -80,7 +104,7 @@ class PriceHandler(BaseHandler):
             db.table('prices').delete()
             for cards in Card.chunk(100):
                 card_ids = [card.card_id for card in cards]
-                prices = self.resource.prices(card_ids)
+                prices = await self.resource.prices(card_ids)
 
                 price_data = [
                     {

@@ -1,8 +1,9 @@
 import json
 import requests
+import aiohttp
 
 from tornado.web import access_log as logger
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from datetime import datetime
 from functools import wraps, cached_property
 
@@ -16,15 +17,15 @@ PRIVATE_KEY = '3525C23D-9C8D-4919-AD79-67A0F07F92EA'
 DATETIME_FORMAT = r'%a, %d %b %Y %H:%M:%S %Z'
 
 #TODO: better name for this decorator which reauthenticates when needed
-def request_access(f):
+def reauthenticate(f):
     @wraps(f)
-    def wrapper(self, *args, **kwargs):
+    async def wrapper(self, *args, **kwargs):
         if (
             not hasattr(self, 'token_expiry') or 
             datetime.now() > self.token_expiry
         ):
-            self.authenticate()
-        return f(self, *args, **kwargs)
+            await self.authenticate()
+        return await f(self, *args, **kwargs)
     return wrapper
 
 
@@ -32,39 +33,44 @@ def request_access(f):
 class TCGPlayer:
     """
     Client library for communicating with TCGPlayer's API.
+    :param session: Async http session
     """
-    @cached_property
-    def session(self):
-        return requests.Session()
+    def __init__(self, session):
+        self.session = session
+        self.access_token = None
 
-    def authenticate(self):
+    @property
+    def headers(self):
+        headers = {
+            'Authorization': f'Bearer {self.access_token}'
+        }
+        return headers
+
+    async def authenticate(self):
         """
         Authenticate
         """
-        logger.info('Authenticating - TCGPlayer API...')
+        logger.info(' AIO - Authenticating - TCGPlayer API...')
         data = {
             'grant_type': 'client_credentials',
             'client_id': PUBLIC_KEY,
             'client_secret': PRIVATE_KEY
         }
-        r = self.session.post(
+        async with self.session.post(
             f'{TCGPLAYER_API_URL}/token', data=data
-        )
-        if r.status_code == 200:
-            content = r.json()
+        ) as r:
+            status = r.status
+            content = await r.json()
+        if status == 200:
             self.access_token = content.get('access_token')
-            self.session.headers.update(
-                {'Authorization': f'Bearer {self.access_token}'}
-            )
             self.token_expiry = datetime.strptime(
                 content.get('.expires'), DATETIME_FORMAT
             )
-            logger.info('Authenticated! - TCGPlayer API')
-        else:
-            raise NotImplementedError
+            logger.info('AIO - Authenticated! - TCGPlayer API')
 
-    @request_access
-    def cards(self, offset=0, limit=100) -> List[Dict]:
+    #TODO: Add handling if status is not 200
+    @reauthenticate
+    async def cards(self, offset=0, limit=100) -> List[Dict]:
         """
         Retrieves a list of cards from TCGPlayer
         """
@@ -74,45 +80,55 @@ class TCGPlayer:
             'categoryId': MTG_CATEGORY_ID,
             'productTypes': 'Cards'
         }
-        r = self.session.get(
-            f'{TCGPLAYER_API_URL}/catalog/products',
+        async with self.session.get(
+            f'{TCGPLAYER_API_URL}/catalog/products', 
+            headers=self.headers,
             params=params
-        )
-        if r.status_code == 200:
-            content = r.json()
+        ) as r:
+            status = r.status
+            content = await r.json()
+        if status == 200:
             cards = content.get('results')
             return cards
-
+        else:
+            raise NotImplementedError
     
-    @request_access
-    def card_sets(self, offset=0, limit=100) -> List[Dict]:
+    @reauthenticate
+    async def card_sets(self, offset=0, limit=100) -> List[Dict]:
         """
-        Retrieves a list of card_sets from TCGPlayer
+        Retrieves a list of cards from TCGPlayer
         """
         params = {
             'offset': offset,
             'limit': limit,
         }
-        r = self.session.get(
-            f'{TCGPLAYER_API_URL}/catalog/categories/{MTG_CATEGORY_ID}/groups',
+        async with self.session.get(
+            f'{TCGPLAYER_API_URL}/catalog/categories/{MTG_CATEGORY_ID}/groups', 
+            headers=self.headers,
             params=params
-        )
-        if r.status_code == 200:
-            content = r.json()
+        ) as r:
+            status = r.status
+            content = await r.json()
+        if status == 200:
             card_sets = content.get('results')
             return card_sets
-
+        else:
+            raise NotImplementedError
     
-    @request_access
-    def prices(self, card_ids: List[int]) -> List[Dict]:
+    @reauthenticate
+    async def prices(self, card_ids: List[int]) -> List[Dict]:
         """
         Retrieves a list of prices from TCGPlayer
         """
         card_ids = ','.join(map(str, card_ids))
-        r = self.session.get(
-            f'{TCGPLAYER_API_URL}/pricing/product/{card_ids}'
-        )
-        if r.status_code == 200:
-            content = r.json()
-            card_sets = content.get('results')
-            return card_sets
+        async with self.session.get(
+            f'{TCGPLAYER_API_URL}/pricing/product/{card_ids}',
+            headers=self.headers
+        ) as r:
+            status = r.status
+            content = await r.json()
+        if status == 200:
+            prices = content.get('results')
+            return prices
+        else:
+            return NotImplementedError
