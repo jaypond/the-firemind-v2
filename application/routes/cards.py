@@ -17,10 +17,6 @@ from application.clients.tcgplayer import TCGPlayer
 
 
 class TestHandler(BaseHandler):
-    async def prepare(self):
-        super().prepare()
-        # await self.resource.set_session(self.session)
-
     async def get(self):
         for i in range(10):
             print(i)
@@ -35,11 +31,12 @@ class TestHandler(BaseHandler):
 
 
 class CardHandler(BaseHandler):
-    async def get(self, card_id):
+    async def get(self):
         """
         Test endpoint to fetch a card from the database
         """
         try:
+            card_id = 86
             card = Card.find_or_fail(card_id)
             self.write(card.card_data)
         except ModelNotFound:
@@ -117,5 +114,4 @@ class PriceHandler(BaseHandler):
                 db.table('prices').insert(price_data)
                 cards_updated += len(card_ids)
                 logger.info(f'{cards_updated} cards updated')
-        
         return self.set_status(201)

@@ -11,6 +11,7 @@ class BaseHandler(tornado.web.RequestHandler):
         :cache: Redis instance for caching.
         """
         self.resource = self.settings.get('resource')
+        self.messenger = self.settings.get('messenger')
         self.cache = self.settings.get('cache')
 
     def write(self, data, status_code=None):
