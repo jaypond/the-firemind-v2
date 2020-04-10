@@ -23,7 +23,7 @@ class MessengerHandler(BaseHandler):
             if MessengerHelper.is_user_message(x):
                 text = x['message']['text']
                 sender_id = x['sender']['id']
-                cards = Card.card_name(text).get()
+                cards = Card.has('card_set').card_name(text).get()
                 if cards:
                     response = MessengerHelper.format_attachment_payload(
                         [card.card_data for card in cards]
