@@ -1,7 +1,7 @@
 DATABASES = {
     'postgres': {
         'driver': 'postgres',
-        'host': 'localhost',
+        'host': 'database',
         'database': 'the_firemind',
         'user': 'jasonmatthewgarcia',
         'password': 'jasonjason3124',

@@ -66,7 +66,7 @@ class CardHandler(BaseHandler):
             db.table('cards').insert(card_data)
             logger.info(f'{offset} cards updated')
             offset += 100
-            cards = self.resource.cards(offset=offset)
+            cards = await self.resource.cards(offset=offset)
         return self.set_status(201)
 
 
@@ -88,7 +88,7 @@ class CardSetHandler(BaseHandler):
                     is_supplemental=card_set.get('isSupplemental')
                 )
             offset += 100
-            card_sets = self.resource.card_sets(offset=offset)
+            card_sets = await self.resource.card_sets(offset=offset)
         return self.set_status(201)
 
 

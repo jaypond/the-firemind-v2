@@ -22,7 +22,7 @@ class Application:
     def make_app(self) -> tornado.web.Application:
         session = aiohttp.ClientSession()
         config = {
-            'cache': Redis('127.0.0.1'),
+            'cache': Redis('cache'),
             'resource': TCGPlayer(session),
             'messenger': Messenger(session),
             'debug': True
@@ -40,5 +40,5 @@ class Application:
         app = self.make_app()
         enable_pretty_logging()
         app.listen(options.port)
-        logger.info('Server is now listening for requests...')
+        logger.info(f'Server is now listening for requests...')
         tornado.ioloop.IOLoop.current().start()

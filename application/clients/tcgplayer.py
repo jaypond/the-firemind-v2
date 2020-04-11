@@ -90,8 +90,6 @@ class TCGPlayer:
         if status == 200:
             cards = content.get('results')
             return cards
-        else:
-            raise NotImplementedError
     
     @reauthenticate
     async def card_sets(self, offset=0, limit=100) -> List[Dict]:
@@ -112,8 +110,6 @@ class TCGPlayer:
         if status == 200:
             card_sets = content.get('results')
             return card_sets
-        else:
-            raise NotImplementedError
     
     @reauthenticate
     async def prices(self, card_ids: List[int]) -> List[Dict]:
@@ -130,5 +126,4 @@ class TCGPlayer:
         if status == 200:
             prices = content.get('results')
             return prices
-        else:
-            return NotImplementedError
+

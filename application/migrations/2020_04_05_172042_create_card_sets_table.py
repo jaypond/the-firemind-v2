@@ -7,7 +7,6 @@ class CreateCardSetsTable(Migration):
         """
         Run the migrations.
         """
-        return
         with self.schema.create('card_sets') as table:
             table.integer('set_id')
             table.string('name')
@@ -18,5 +17,4 @@ class CreateCardSetsTable(Migration):
         """
         Revert the migrations.
         """
-        return
         self.schema.drop('card_sets')
