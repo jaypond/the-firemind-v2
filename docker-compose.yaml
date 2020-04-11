@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  the-firemind:
+    build: .
+    environment:
+      test: "ADDYOURENVVARIABLESHERE"
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - 8888:8888
+  cache:
+    image: redis:alpine
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - 6379:6379
+    depends_on:
+      - the-firemind
+  database:
+    image: postgres # use latest official postgres version
+    environment:
+      POSTGRES_USER: jasonmatthewgarcia
+      POSTGRES_PASSWORD: jasonjason3124
+      POSTGRES_DB: the_firemind
+      PGDATA: /data/postgres
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    depends_on:
+      - the-firemind
