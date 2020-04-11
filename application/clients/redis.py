@@ -1,11 +1,11 @@
-import redis
+import aioredis
+import json
 from typing import List, Dict
-
+from async_property import async_cached_property
 
 class Redis:
     """
-    Client library for communicating with redis instance.
-
+    Client library for communicating with redis instance asynchronously
     :param host: Redis host
     :param db: Redis db
     :param port: Redis port
@@ -14,17 +14,25 @@ class Redis:
         self.host = host
         self.db = db
         self.port = port
-    
-    @property
-    def client(self):
-        return redis.StrictRedis(
-            host=self.host,
-            db=self.db,
-            port=self.port
+
+    @async_cached_property
+    async def client(self):
+        return await aioredis.create_redis_pool(
+            f'redis://{self.host}:{self.port}/{self.db}'
         )
     
-    def get(self, key, default=None):
-        return self.client.get(key) or default
+    async def get(self, key, default=None):
+        client = await self.client
+        return await client.get(key, encoding='utf-8') or default
     
-    def set(self, key, value):
-        return self.client.set(key, value)
+    async def exists(self, key):
+        client = await self.client
+        return await client.exists(key)
+    
+    async def flushdb(self):
+        client = await self.client
+        return await client.flushdb()
+    
+    async def set(self, key, value):
+        client = await self.client
+        return await client.set(key, json.dumps(value))

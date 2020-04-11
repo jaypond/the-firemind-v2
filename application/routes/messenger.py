@@ -23,10 +23,19 @@ class MessengerHandler(BaseHandler):
             if MessengerHelper.is_user_message(x):
                 text = x['message']['text']
                 sender_id = x['sender']['id']
-                cards = Card.has('card_set').card_name(text).get()
+                #TODO: Make this cleaner
+                cards = await self.cache.get(text, default=None)
+                if cards:
+                    cards = json.loads(cards)
+                else:
+                    cards = Card.card_name(text).get()
+                    cards = [card.card_data for card in cards]
+                    await self.cache.set(
+                        text, cards
+                    ) if cards else None
                 if cards:
                     response = MessengerHelper.format_attachment_payload(
-                        [card.card_data for card in cards]
+                        cards
                     )
                 else:
                     #TODO: extract functionality.

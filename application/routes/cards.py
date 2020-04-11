@@ -25,6 +25,8 @@ class TestHandler(BaseHandler):
     async def post(self):
         try:
             cards = await self.resource.cards(offset=100)
+            for card in cards:
+                await self.cache.set(card['name'], card)
         except Exception as e:
             logger.error(e)
         return self.write(cards)
@@ -98,11 +100,11 @@ class PriceHandler(BaseHandler):
         """
         cards_updated = 0
         with db.transaction():
+            db.begin_transaction()
             db.table('prices').delete()
             for cards in Card.chunk(100):
                 card_ids = [card.card_id for card in cards]
                 prices = await self.resource.prices(card_ids)
-
                 price_data = [
                     {
                         'card_id': price.get('productId'),
@@ -114,4 +116,5 @@ class PriceHandler(BaseHandler):
                 db.table('prices').insert(price_data)
                 cards_updated += len(card_ids)
                 logger.info(f'{cards_updated} cards updated')
+        await self.cache.flushdb()
         return self.set_status(201)
