@@ -1,1 +1,1 @@
-web: python3 start_app.py
+web:python3 start_app.py --port=$PORT
